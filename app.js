@@ -1,11 +1,9 @@
 const express = require('express');
 
 const app = express();
+const basicRouter = require('./routes/basicRoute');
+app.use(express.json());
 
-app.get('/', (req,res) => {
-    res.status(200).json({
-        message: 'hola from the server side!!', app: 'test-login'
-    })
-})
+app.use('/',basicRouter);       
 
 module.exports = app;
