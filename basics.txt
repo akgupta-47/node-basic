@@ -1,3 +1,6 @@
 app.use()
 here use method adds the function added to its parenthesis tot he middlware stack
 the application “listens” for requests that match the specified route(s) and method(s), and when it detects a match, it calls the specified callback function.
+
+morgan just makes loggins middleware info to console easier
+get route code time -- format
