@@ -38,6 +38,7 @@ process.on('unhandledRejection', (err) => {
   console.log('UNHANDLED REJECTION! 💥 Shutting down...');
   console.log(err.name, err.message);
   server.close(() => {
+    // exit(0) means successful operation and then exit, exit(1) means unsuccessful operation then exit
     process.exit(1);
   });
 });
