@@ -1,6 +1,8 @@
 const express = require('express');
 const morgan = require('morgan');
 
+const userRouter = require('./routes/userRoutes');
+
 const app = express();
 // eslint-disable-next-line import/newline-after-import
 const globalErrorHandler = require('./controllers/errorController');
@@ -14,6 +16,7 @@ if (process.env.NODE_ENV === 'DEVELOPMENT') {
 }
 
 app.use('/', basicRouter);
+app.use('/appname/users', userRouter);
 
 // this will run after all the routes defined by us for this applications are checked and none is matched
 // therefore it is placed at end of app.js
