@@ -83,3 +83,18 @@ and we use object.keys(err.keyValue)[0] to take the first value in that array of
 },
 
 // errors coming in validation of mongoose data like a string too short, or wrong format of data in req.body
+
+there are 4-5 functions that can be applied with schema
+there are 2 types schema.statics. that apllies on modle /all documents like finding average of any property from all documents
+other is instance method, schema.methods. this applies only on a particular document, like adding first and last name, or comparing passwords
+virtuals function : they are great when u want to create a property from existing properties while displaying the documents but not persisting it in the database
+alias : we can define a alias for any property in schema
+we also have querry helpers
+
+we can set our own headers in postman, and then check it using req.headers property
+
+jwt.verify() is a sync function if there is no callback
+therefore we have to often promisfy it to return a asyn version of that function
+promisify(jwt.verify())(token,secret)
+but to use promisify we need to take it from util module of nodejs
+const {promisify} = require('util')

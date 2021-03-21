@@ -7,6 +7,10 @@ const userSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Every USer must have a name'],
+    validate: [
+      validator.isAlpha,
+      'name should only have characters not numbers or symbols',
+    ],
   },
   email: {
     type: String,
@@ -23,6 +27,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please enter a password'],
     minlength: 8,
+    // adding select: false will not show password property anytime a document is requested, until specified in the code to select the password
     select: false,
   },
   passwordConfirm: {
@@ -30,6 +35,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Please confirm your a password'],
     validate: {
       // This only works on SAVE
+      // this is because the this keyword only points to the newley created documents
       validator: function (el) {
         return el === this.password;
       },
@@ -45,6 +51,38 @@ const userSchema = new mongoose.Schema({
     select: false,
   },
 });
+
+userSchema.pre('save', async function (next) {
+  // only run this fun if password was modified
+  if (!this.isModified('password')) return next();
+  // Hash the password at cost of 12
+  // bcrypt functions are usually async so use await
+  this.password = await bcrypt.hash(this.password, 12);
+  // DELETE it before getting it in databse coz we only need it for validation
+  this.passwordConfirm = undefined;
+  next();
+});
+
+// here we cannot use this.password as ,the select property is not alowed on current document for password
+userSchema.methods.correctPassword = async function (
+  candidatePassword,
+  userPassword
+) {
+  return await bcrypt.compare(candidatePassword, userPassword);
+};
+
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+  if (this.passwordChangedAt) {
+    const changedTimestamp = parseInt(
+      this.passwordChangedAt.getTime() / 1000,
+      10
+    );
+
+    //console.log(changedTimestamp, JWTTimestamp);
+    return JWTTimestamp < changedTimestamp;
+  }
+  return false;
+};
 
 const User = mongoose.model('User', userSchema);
 
