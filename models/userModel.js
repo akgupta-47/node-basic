@@ -68,6 +68,21 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
+userSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+
+  // sometimes saving to database is slower than issuing the token, making the changePasword timestamp a bit after the token is issued
+  // this creates problems for users
+  this.passwordChangedAt = Date.now() - 1000;
+  next();
+});
+
+userSchema.pre(/^find/, function (next) {
+  //this point to current querry
+  this.find({ active: { $ne: false } });
+  next();
+});
+
 // here we cannot use this.password as ,the select property is not alowed on current document for password
 userSchema.methods.correctPassword = async function (
   candidatePassword,
