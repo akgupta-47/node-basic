@@ -24,11 +24,19 @@ const createSignToken = (user, statusCode, res) => {
 };
 
 exports.signUp = catchAsync(async (req, res, next) => {
+  const { name, email, password, passwordConfirm, role } = req.body;
+  if (req.body.role !== 'user') {
+    return next(
+      new AppError('You can only be a user, so stay in your limits', 401)
+    );
+  }
+
   const newUser = await User.create({
-    name: req.body.name,
-    email: req.body.email,
-    password: req.body.password,
-    passwordConfirm: req.body.passwordConfirm,
+    name,
+    email,
+    password,
+    passwordConfirm,
+    role,
   });
 
   //jwt.sign(payload, secretOrPrivateKey, [options, callback])
@@ -99,7 +107,24 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
 
   // // Grant acess to protected route
-  // req.user = currentUser;
+  req.user = currentUser;
   // res.locals.user = currentUser;
   next();
 });
+
+exports.restrictTo = (...roles) => {
+  // wrapper function return the middleware
+  return (req, res, next) => {
+    // roles array has ['admin','owner']
+    // as the prtect middleware runs before this middleware, it already has the req.user propery on it
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new AppError(
+          'You dont have permissions to access to use this route',
+          403
+        )
+      ); //403 is forbidden error)
+    }
+    next();
+  };
+};

@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema({
     // adding select: false will not show password property anytime a document is requested, until specified in the code to select the password
     select: false,
   },
+  role: {
+    type: String,
+    default: 'user',
+    enum: ['user', 'admin', 'owner'],
+  },
   passwordConfirm: {
     type: String,
     required: [true, 'Please confirm your a password'],
