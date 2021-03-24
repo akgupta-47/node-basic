@@ -15,6 +15,22 @@ const signToken = (id) => {
 const createSignToken = (user, statusCode, res) => {
   const token = signToken(user._id);
 
+  // Cookie implementaion (cookies are data that are sent by browser with every request)
+  // as we can see we used a httpOnly way of storing key
+  // we cannot manipulate it from our side for logging out like deleting it
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+  if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+  res.cookie('jwt', token, cookieOptions);
+
+  // as the cookie is in the browser stored
+  // we no longer need to show the password when new doc is created
+  user.password = undefined;
+
   //send the token
   res.status(statusCode).json({
     status: 'success',
@@ -46,7 +62,6 @@ exports.confirmSignup = catchAsync(async (req, res, next) => {
 });
 
 exports.signUp = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm } = req.body;
   // if (req.body.role !== 'user') {
   //   return next(
   //     new AppError('You can only be a user, so stay in your limits', 401)
@@ -54,10 +69,10 @@ exports.signUp = catchAsync(async (req, res, next) => {
   // }
 
   const newUser = await User.create({
-    name,
-    email,
-    password,
-    passwordConfirm,
+    name: req.body.name,
+    email: req.body.email,
+    password: req.body.password,
+    passwordConfirm: req.body.passwordConfirm,
   });
 
   const token = signToken(newUser._id);
