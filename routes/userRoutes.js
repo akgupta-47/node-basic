@@ -6,6 +6,7 @@ const router = express.Router();
 
 // user lohin/signup routes
 router.post('/signup', authController.signUp);
+router.patch('/signup/:token', authController.confirmSignup);
 router.post('/login', authController.login);
 
 // user password change routes

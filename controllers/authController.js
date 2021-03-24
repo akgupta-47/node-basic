@@ -25,28 +25,78 @@ const createSignToken = (user, statusCode, res) => {
   });
 };
 
-exports.signUp = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm, role } = req.body;
-  if (req.body.role !== 'user') {
+exports.confirmSignup = catchAsync(async (req, res, next) => {
+  const { token } = req.params;
+
+  const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+  //3.  Check if user still exists. Si no hay un id del usuario... falso
+  const user = await User.findById(decoded.id).select('+validated');
+  if (!user) {
     return next(
-      new AppError('You can only be a user, so stay in your limits', 401)
+      new AppError('The user belonging to this token does not exist.', 401)
     );
   }
+  if (user.validated) {
+    return next(new AppError('This account has already been validated', 400));
+  }
+  user.validated = true;
+  await user.save({ validateBeforeSave: false });
+  createSignToken(user, 200, res);
+});
+
+exports.signUp = catchAsync(async (req, res, next) => {
+  const { name, email, password, passwordConfirm } = req.body;
+  // if (req.body.role !== 'user') {
+  //   return next(
+  //     new AppError('You can only be a user, so stay in your limits', 401)
+  //   );
+  // }
 
   const newUser = await User.create({
     name,
     email,
     password,
     passwordConfirm,
-    role,
   });
+
+  const token = signToken(newUser._id);
+  // console.log(token);
+
+  //Send email to client
+  const URL = `${req.protocol}://${req.get(
+    'host'
+  )}/appname/users/signup/${token}`;
+
+  const message = `You must complete the registration process by following the link below: \n ${URL}.`;
+
+  try {
+    sendEmail({
+      email: newUser.email,
+      subject: 'Follow the instructions to activate your account.',
+      message,
+    });
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Token sent by email',
+    });
+  } catch (err) {
+    // console.log(err);
+    return next(
+      new AppError(
+        'There was an error sending an email, try sending later',
+        500
+      )
+    );
+  }
 
   //jwt.sign(payload, secretOrPrivateKey, [options, callback])
   // const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, {
   //   expiresIn: process.env.JWT_EXPIRES_IN,
   // });
 
-  createSignToken(newUser, 201, res);
+  //createSignToken(newUser, 201, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
