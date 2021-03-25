@@ -135,6 +135,17 @@ exports.login = catchAsync(async (req, res, next) => {
   createSignToken(user, 200, res);
 });
 
+// Since the httpOnly secure way of sending cookies the deletion is not possible
+// a clever way to overWrite the cookie with some dummy text so
+// it does not know which user to log in
+exports.logout = (req, res) => {
+  res.cookie('jwt', 'GuessWhatYouJustGotLoggedOut', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+  res.status(200).json({ status: 'success' });
+};
+
 // protect routes
 exports.protect = catchAsync(async (req, res, next) => {
   // getting token and check if it is theres
